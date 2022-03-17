@@ -5,8 +5,9 @@ import sentencepiece as spm
 import nltk
 import spacy
 import warnings #treure
-warnings.filterwarnings("ignore") #treure aixo
-
+from models.terminology.terminologyList import tr_en_dict
+from TurkishStemmer import TurkishStemmer
+warnings.filterwarnings("ignore") 
 from fairseq.models.transformer import TransformerModel
 
 #Wilker's splitter from NTMI course
@@ -74,37 +75,150 @@ class TranslationInter:
         tgt_toks = self.model.remove_bpe(tgt_bpe)
         tgt = self.model.detokenize(tgt_toks)
         return tgt
-     #we need to install spacy and zeyrek
-     #python -m spacy download en   
-    def tag_term(self, sen, terminologyList, nlp_lemma):
-        if len(terminologyList)==0: return sen
-        new_sen=''
-        for word in sen.split(' '):
-            if word in terminologyList.keys():
-                if self.src=='en_XX':
-                    new_sen=new_sen+"<0> "+ word +" <1> "+nlp_lemma.analyze(terminologyList[word])[0][0].lemma+" <2> "   
-                elif self.src=='tr_TR':
-                    new_sen=new_sen+"<0> "+ word +" <1> "+nlp_lemma(terminologyList[word])[0].lemma_+" <2> "
-            else:
-               new_sen=new_sen+word+' '
-        return new_sen[:-1]
 
-    def translate(self, sentence, terminologyList={}):
+#we need to install spacy and zeyrek
+#python -m spacy download en   
+    def limits_word(self, sen, i, up):
+            lower=i
+            upper=up+i-1
+            while lower>0 and sen[lower]!=' ': lower-=1
+            while upper<len(sen) and sen[upper] not in [' ', '.', ',', '?', '!', '-']: upper+=1 
+            if sen[lower]==' ': lower+=1
+            return [lower, upper]
+
+
+    def tag_term(self, sen, terminologyList):
+            if len(terminologyList)==0: return sen
+            stemmer = TurkishStemmer()
+            new_sen=''
+            aux_words=''
+            sen_sep=sen.split(' ')
+            tags=[]
+            tags_to=[]
+            lemmas=[]
+            lemmas_orig=[]
+            for idx, word in enumerate(sen_sep):
+                tags.append(-1)
+                for idx, word in enumerate(sen_sep):
+                    tags.append(-1)
+                    if self.src=='tr_TR':
+                        aux_lemma=stemmer.stem(word)
+                        lemmas.append(aux_lemma) 
+                        lemmas_orig.append(idx)
+            lemmas_sep=' '.join([i for i in lemmas if len(i)>0])
+            for term in sorted(terminologyList.keys(), reverse=True, key=len):
+                if len(term)>5 and term[:5]=='PROPN': 
+                    aux_term=term[20:]
+                    x=0
+                    w_acumm=0
+                    i=sen[x:].find(aux_term) 
+                    while i>-1:
+                        i+=x
+                        limits=limits_word(sen, i, len(aux_term))
+                        src_lemma=sen[limits[0]:limits[1]]
+                        w_acumm+=len(sen[x:x+sen[x:].find(src_lemma)].split(' '))-1
+                        aux_orig=[]
+                        possible=True
+                        for idx in range(len(src_lemma.split(' '))):
+                            aux_orig.append(w_acumm+idx)
+                            if tags[w_acumm+idx]!=-1: possible=False
+                        if possible and limits[0]==i and limits[1]==i+len(aux_term):
+                            for ele in aux_orig:
+                                tags[ele]=len(tags_to)
+                            tags_to.append(terminologyList[term])
+                        x=limits[1]
+                        i=sen[x:].find(aux_term)
+                        w_acumm+=len(src_lemma.split(' '))-1
+                else:
+                    aux_term=" ".join(term.split(" ")[:-1])
+                    last_term=term.split(" ")[-1]
+                    x=0
+                    w_acumm=0
+                    if aux_term=='':
+                        term=last_term
+                        i=lemmas_sep[x:].find(term)
+                        while i>-1:
+                            i+=x
+                            limits=limits_word(lemmas_sep, i, len(term))            
+                            src_lemma=lemmas_sep[limits[0]:limits[1]]
+                            w_acumm+=len(lemmas_sep[x:x+lemmas_sep[x:].find(src_lemma)].split(' '))-1
+                            aux_orig=[]
+                            possible=True
+                            for idx in range(len(src_lemma.split(' '))):
+                                aux_orig.append(lemmas_orig[w_acumm+idx])
+                                if tags[aux_orig[-1]]!=-1: possible=False
+                            if possible and limits[0]==i and limits[1]==i+len(term):
+                                for ele in aux_orig:
+                                    tags[ele]=len(tags_to)
+                                tags_to.append(terminologyList[term])
+                            x=limits[1]
+                            i=lemmas_sep[x:].find(term)
+                            w_acumm+=len(src_lemma.split(' '))-1
+                    else:
+                        x=0
+                        w_acumm=0
+                        i=sen[x:].find(aux_term) 
+                        while i>-1:
+                            i+=x
+                            limits=limits_word(sen, i, len(aux_term))
+                            src_lemma=sen[limits[0]:limits[1]]
+                            w_acumm+=len(sen[x:x+sen[x:].find(src_lemma)].split(' '))-1
+                            aux_orig=[]
+                            possible=True
+                            for idx in range(len(src_lemma.split(' '))):
+                                aux_orig.append(w_acumm+idx)
+                                if tags[w_acumm+idx]!=-1: possible=False
+                            x=limits[1]
+                            w_acumm+=len(src_lemma.split(' '))-1
+                            
+                            if possible and limits[0]==i and limits[1]==i+len(aux_term):
+                                x=limits[1]+1
+                                y=sen[x:].find(" ")
+                                if stemmer.stem(sen[x:y])==aux_term:
+                                    for ele in aux_orig:
+                                        tags[ele]=len(tags_to)
+                                    tags[ele+1]=len(tags_to)
+                                    tags_to.append(terminologyList[term])
+                                    x+=y
+                                    w_acumm+=1
+                            i=sen[x:].find(aux_term)
+            idx=0
+            new_sen=''
+            while idx<len(sen_sep):
+                if tags[idx]!=-1:
+                    aux_word=sen_sep[idx]
+                    tag=tags_to[tags[idx]]
+                    idx+=1
+                    while idx<len(sen_sep) and tags[idx-1]==tags[idx]:
+                        aux_word=aux_word+' '+sen_sep[idx]
+                        idx+=1
+                    symbol=''
+                    while aux_word[-1] in [',', '.', '?', '!']:
+                            symbol=symbol+aux_word[-1]
+                            aux_word=aux_word[:-1]
+                    new_sen=new_sen+' <0> '+aux_word+' <1> '+tag+' <2>'+symbol
+                else: 
+                    new_sen=new_sen+' '+sen_sep[idx]
+                    idx+=1
+                    
+            if new_sen[0]==' ': new_sen=new_sen[1:]
+            print(new_sen)
+            return new_sen
+
+def translate(self, sentence, terminologyList={}):
         self.model.eval()
         translations = []
         t0 = time.time()
+        terminologyList=tr_en_dict
         processed_sents = []
         if self.src == 'en_XX':
             sentences = self.en_sent_detector.tokenize(sentence.strip())
         if self.src == 'tr_TR':
             #sentences = naive_splitter(sentence.strip())
             sentences = self.tr_sent_detector.tokenize(sentence.strip())
-        if self.tgt=='en_XX':
-            nlp_lemma=spacy.load("en_core_web_sm")
-        elif self.tgt=='tr_TR':
-            nlp_lemma=zeyrek.MorphAnalyzer()    
+
         for sent in sentences:
-            sent=self.tag_term(sent, terminologyList, nlp_lemma)
+            sent=self.tag_term(sent, terminologyList)
             split_sent = sent.split(" ")
             token_count = len(split_sent)
             if token_count <= self.max_len:
@@ -132,13 +246,9 @@ class TranslationInter:
 
 print("Translating tr-en", '*' * 100)
 translator = TranslationInter('../', 'models', '../sentence.term.bpe.model', 'tr_TR', 'en_XX', multi=False)
-sent = "Hükümetin kendisi hakkındake suçlamalarını. Soros ile ilgili ortaya <0> atılan <1> BB <2> iddiaları bir kez daha reddeden Kavala, siyasi gerekçelerle tutuklu bulunduğunu belirterek, bunun Avrupa İnsan Hakları Mahkemesi (AİHM) kararında da ortaya koyulduğunu vurguladı."
+sent="Araştırmayı yürüten virolog BBC'ye verdiği demeçte, varolan hatırlatma aşılarının Omicron varyantından kaynaklanan ciddi hastalıklara ve ölümlere karşı hala koruma sağlamaya devam edeceğine dair cesaret verici işaretler olduğunu söyledi."
 report = translator.translate(sent)
 print(report)
-#print("Translating tr-en", '*' * 100)
-#translator = TranslationInter('../../data/bin', '../ckpts/en-tr', '../data/mbart.cc25.v2/sentence.bpe.model', 'en_XX', 'tr_TR', multi=True)
-#sent = "If they ask you the wrong questions, there are no right answers."
-#report = translator.translate(sent)
-#print(report)
+
 
 
