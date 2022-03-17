@@ -5,7 +5,6 @@ import sentencepiece as spm
 import nltk
 import spacy
 import warnings #treure
-from models.terminology.terminologyList import tr_en_dict
 from TurkishStemmer import TurkishStemmer
 warnings.filterwarnings("ignore") 
 from fairseq.models.transformer import TransformerModel
@@ -203,7 +202,6 @@ class TranslationInter:
                     idx+=1
                     
             if new_sen[0]==' ': new_sen=new_sen[1:]
-            print(new_sen)
             return new_sen
 
     def translate(self, sentence):
@@ -219,6 +217,7 @@ class TranslationInter:
 
             for sent in sentences:
                 sent=self.tag_term(sent)
+                self.report["tagged"]=sent
                 split_sent = sent.split(" ")
                 token_count = len(split_sent)
                 if token_count <= self.max_len:
@@ -244,11 +243,11 @@ class TranslationInter:
             self.report['translation'] = final
             return self.report
 
-print("Translating tr-en", '*' * 100)
-translator = TranslationInter('../', 'models', '../sentence.term.bpe.model', 'tr_TR', 'en_XX', terminologyList=tr_en_dict, multi=False)
-sent="Balgam ve öksürüğünü kesmek için balgam söktürücü ilaçlar yazıldı."
-report = translator.translate(sent)
-print(report)
+#print("Translating tr-en", '*' * 100)
+#translator = TranslationInter('../', 'models', '../sentence.term.bpe.model', 'tr_TR', 'en_XX', terminologyList=tr_en_dict, multi=False)
+#sent="Balgam ve öksürüğünü kesmek için balgam söktürücü ilaçlar yazıldı."
+#report = translator.translate(sent)
+#print(report)
 
 
 

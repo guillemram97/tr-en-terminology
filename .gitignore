@@ -3,3 +3,4 @@ checkpoint_best.pt
 dict.en_XX.txt
 dict.tr_TR.txt
 sentence.bpe.model
+results
