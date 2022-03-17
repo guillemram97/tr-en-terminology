@@ -6,6 +6,7 @@ import nltk
 import spacy
 import zeyrek
 
+
 import warnings #treure!
 warnings.filterwarnings("ignore") #treure aixo
 
