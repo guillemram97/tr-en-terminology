@@ -1,0 +1,4 @@
+Flask
+fairseq==0.10.0
+sentencepiece
+nltk
