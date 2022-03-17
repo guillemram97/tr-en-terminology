@@ -4,10 +4,7 @@ import subprocess
 import sentencepiece as spm
 import nltk
 import spacy
-import zeyrek
-
-
-import warnings #treure!
+import warnings #treure
 warnings.filterwarnings("ignore") #treure aixo
 
 from fairseq.models.transformer import TransformerModel
