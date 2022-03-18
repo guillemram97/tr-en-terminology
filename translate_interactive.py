@@ -204,7 +204,7 @@ class TranslationInter:
                         if possible and limits[0]==i and limits[1]==i+len(term):
                             for ele in aux_orig:
                                 tags[ele]=len(tags_to)
-                            tags_to.append(terminologyList[term])
+                            tags_to.append(self.terminologyList[term])
                         x=limits[1]
                         i=lemmas_sep[x:].find(term)
                         w_acumm+=len(src_lemma.split(' '))-1
