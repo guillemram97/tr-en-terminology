@@ -89,8 +89,8 @@ class TranslationInter:
 
     def tag_term(self, sen):
             if len(self.terminologyList)==0: return sen
-            stemmer = TurkishStemmer()
-            new_sen=''
+            if self.src=='tr_TR': stemmer = TurkishStemmer()
+            if self.src=='en_XX': nlp_lemma=spacy.load("en_core_web_sm")
             aux_words=''
             sen_sep=sen.split(' ')
             tags=[]
@@ -105,6 +105,11 @@ class TranslationInter:
                         aux_lemma=stemmer.stem(word)
                         lemmas.append(aux_lemma) 
                         lemmas_orig.append(idx)
+                    elif self.src=='en_XX':
+                        aux_lemma=nlp_lemma(word)
+                        for i in aux_lemma:
+                            lemmas.append(i.lemma_) 
+                        for el in aux_lemma: lemmas_orig.append(idx)                        
             lemmas_sep=' '.join([i for i in lemmas if len(i)>0])
             for term in sorted(self.terminologyList.keys(), reverse=True, key=len):
                 if len(term)>5 and term[:5]=='PROPN': 
@@ -129,7 +134,7 @@ class TranslationInter:
                         x=limits[1]
                         i=sen[x:].find(aux_term)
                         w_acumm+=len(src_lemma.split(' '))-1
-                else:
+                elif self.src=="tr_TR":
                     aux_term=" ".join(term.split(" ")[:-1])
                     last_term=term.split(" ")[-1]
                     x=0
@@ -182,6 +187,27 @@ class TranslationInter:
                                     x+=y
                                     w_acumm+=1
                             i=sen[x:].find(aux_term)
+                elif self.src=="en_XX":
+                    x=0
+                    w_acumm=0
+                    i=lemmas_sep[x:].find(term)
+                    while i>-1:
+                        i+=x
+                        limits=self.limits_word(lemmas_sep, i, len(term))            
+                        src_lemma=lemmas_sep[limits[0]:limits[1]]
+                        w_acumm+=len(lemmas_sep[x:x+lemmas_sep[x:].find(src_lemma)].split(' '))-1
+                        aux_orig=[]
+                        possible=True
+                        for idx in range(len(src_lemma.split(' '))):
+                            aux_orig.append(lemmas_orig[w_acumm+idx])
+                            if tags[aux_orig[-1]]!=-1: possible=False
+                        if possible and limits[0]==i and limits[1]==i+len(term):
+                            for ele in aux_orig:
+                                tags[ele]=len(tags_to)
+                            tags_to.append(terminologyList[term])
+                        x=limits[1]
+                        i=lemmas_sep[x:].find(term)
+                        w_acumm+=len(src_lemma.split(' '))-1
             idx=0
             new_sen=''
             while idx<len(sen_sep):
@@ -203,6 +229,9 @@ class TranslationInter:
                     
             if new_sen[0]==' ': new_sen=new_sen[1:]
             return new_sen
+
+
+
 
     def translate(self, sentence):
             self.model.eval()
