@@ -11,4 +11,9 @@ This was the most used method in [terminology shared task of WMT2021](https://ac
 
 ---
 
+## Finetunning the original model
+The original model is a MT model for English to Turkish and vice versa. We used the same training data as the original model to avoid a change in performance. However, the training data was modified to include terminology tags: we identified word pairs from the [MUSE dictionary](https://github.com/facebookresearch/MUSE) that appeared in both the source and target sentence:
 
+`In our Solar System there are perhaps more than billion huge, <0> stray <1> başıboş <2> meteors that would cause serious consequences should they colli de .`
+
+However, we only include the tags in the source sentence and not in the target sentence. 
