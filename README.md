@@ -7,4 +7,8 @@ The original method used factors. However, we are applying this method at word-l
 
 **Output**: `Alle Stellvertreter werden fur eine Amtszeit gewahlt` 
   
-In the terminology shared task of WMT2021 most participants this method at word-level:
+This was the most used method in [terminology shared task of WMT2021](https://aclanthology.org/2021.wmt-1.69/).
+
+---
+
+
