@@ -20,6 +20,14 @@ For pre-processing we rely on sentencepiece; we can re-use the instructions give
 
 Once pre-processed, we need to binarize the data in order to train our fairseq model; again we can follow the mBART25 instructions. The important part here is to make sure you use the mBART25 dictionary while preprocessing, and include the three new special tokens. The easiest way to do this is to simply replace the last three tokens of the mBART25 dictionary by `<0>`, `<1>` and `<2>`.
 
+```
+DICT=mbart.cc25.v2/dict.txt #this has to include <0>, <1> and <2> at the end!
+echo "Binarize the training setup en-tr original"
+fairseq-preprocess --source-lang en_XX --target-lang tr_TR --trainpref data/train.bpe.tr-en --validpref data/dev.bpe.tr-en --testpref data/devtest.bpe.tr-en \
+  --destdir data/BT-edi/train-en-tr-multi-synth/bin --thresholdtgt 0 --thresholdsrc 0 --srcdict ${DICT} --tgtdict data/BT-edi/train-en-tr-multi-synth/bin/dict.tr_TR.txt
+echo "Done"
+```
+
 Once your data is binarized you can call the fairseq-train command with several hparams.
 
 **tr-en**  
