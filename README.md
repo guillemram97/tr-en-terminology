@@ -12,11 +12,9 @@ This was the most used method in [terminology shared task of WMT2021](https://ac
 ---
 
 ## Finetunning the original model
-The original model is a MT model for English to Turkish and vice versa. We used the same training data as the original model to avoid a change in performance. However, the training data was modified to include terminology tags: we identified word pairs from the [MUSE dictionary](https://github.com/facebookresearch/MUSE) that appeared in both the source and target sentence:
+The original model is a MT model for English to Turkish and vice versa. We used the same training data as the original model to avoid a change in performance. However, the training data was modified to include terminology tags: we identified word pairs from the [MUSE dictionary](https://github.com/facebookresearch/MUSE) that appeared in both the source and target sentence, and tagged the source sentences accordingly:
 
 `In our Solar System there are perhaps more than billion huge, <0> stray <1> başıboş <2> meteors that would cause serious consequences should they collide .`
-
-However, we only include the tags in the source sentence and not in the target sentence. 
 
 For pre-processing we rely on sentencepiece; we can re-use the instructions given [here](https://github.com/pytorch/fairseq/blob/main/examples/mbart/README.md). However, we previously have to modify `sentence.bpe.model` so that it includes the tokens `<0>`, `<1>` and `<2>`: [this notebook](https://notebooks.githubusercontent.com/view/ipynb?browser=chrome&color_mode=auto&commit=8420f2179007c398c8b70f63cb12d8aec827397c&device=unknown&enc_url=68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f676f6f676c652f73656e74656e636570696563652f383432306632313739303037633339386338623730663633636231326438616563383237333937632f707974686f6e2f6164645f6e65775f766f6361622e6970796e62&logged_in=false&nwo=google%2Fsentencepiece&path=python%2Fadd_new_vocab.ipynb&platform=android&repository_id=84183882&repository_type=Repository&version=98) explains how to do this to create a new sentencepiece tokenizer called `sentence.term.bpe.model`.
 
