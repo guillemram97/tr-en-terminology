@@ -48,5 +48,9 @@ if __name__ == "__main__":
     if len(sys.argv) < 6:
         raise ValueError("Usage: app.py bin_dir model_dir spm_dir src_language tgt_language")
     bin_dir, model_dir, spm_dir, src, tgt = sys.argv[1:6]
+    print(bin_dir)
+    print(model_dir)
+    print(spm_dir)
     model = init(bin_dir, model_dir, spm_dir, src, tgt)
     app.run(host='0.0.0.0', port=4000)
+
