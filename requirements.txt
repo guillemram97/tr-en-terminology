@@ -1,4 +1,7 @@
 Flask
+editdistance
+spacy
 fairseq==0.10.0
 sentencepiece
 nltk
+TurkishStemmer
